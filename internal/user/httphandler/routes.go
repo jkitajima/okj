@@ -14,11 +14,12 @@ func (s *UserServer) addRoutes() {
 		r.Use(responder.RespondAuth(s.auth))
 
 		r.Post("/", s.handleUserCreate())
-		r.Get("/{userID}", s.handleUserFindByID())
 		r.Patch("/{userID}", s.handleUserUpdateByID())
 		r.Delete("/{userID}", s.handleUserSoftDeleteByID())
 	})
 
 	// Public routes
-	// s.mux.Group(func(r chi.Router) {})
+	s.mux.Group(func(r chi.Router) {
+		r.Get("/{userID}", s.handleUserFindByID())
+	})
 }

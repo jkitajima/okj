@@ -7,6 +7,7 @@ import (
 	"okj/internal/user"
 	"okj/pkg/responder"
 
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 )
 
@@ -14,7 +15,6 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 	type request struct {
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
-		Role      string `json:"role" validate:"omitempty,oneof=default admin"`
 	}
 
 	type response struct {
@@ -34,10 +34,27 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 			return
 		}
 
+		_, claims, err := jwtauth.FromContext(r.Context())
+		if err != nil {
+			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Bearer token is malformatted.")
+			return
+		}
+
+		sub, err := uuid.Parse(claims["sub"].(string))
+		if err != nil {
+			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Invalid UUID.")
+			return
+		}
+
 		id := r.PathValue("userID")
 		uuid, err := uuid.Parse(id)
 		if err != nil {
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "User ID must be a valid UUID.")
+			return
+		}
+
+		if sub != uuid {
+			responder.RespondMetaMessage(w, r, http.StatusForbidden, "You are not allowed to update other user's information.")
 			return
 		}
 
@@ -46,13 +63,12 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 			User: &user.User{
 				FirstName: req.FirstName,
 				LastName:  &req.LastName,
-				Role:      user.Role(req.Role),
 			},
 		})
 		if err != nil {
 			switch err {
 			case user.ErrNotFoundByID:
-				responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Could not find any user with provided ID.")
+				responder.RespondMetaMessage(w, r, http.StatusNotFound, "Could not find any user with provided ID.")
 			default:
 				responder.RespondInternalError(w, r)
 			}
