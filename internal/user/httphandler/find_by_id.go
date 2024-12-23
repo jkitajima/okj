@@ -33,7 +33,7 @@ func (s *UserServer) handleUserFindByID() http.HandlerFunc {
 		if err != nil {
 			switch err {
 			case user.ErrNotFoundByID:
-				responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Could not find any user with provided ID.")
+				responder.RespondMetaMessage(w, r, http.StatusNotFound, "Could not find any user with provided ID.")
 			default:
 				responder.RespondInternalError(w, r)
 			}
