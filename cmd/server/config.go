@@ -2,26 +2,34 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
 	"github.com/peterbourgon/ff/v4/ffyaml"
 )
 
+type Environment string
+
+const (
+	Local Environment = "local"
+)
+
+func NewEnvironment(env string) Environment {
+	switch env {
+	case "local":
+		return Local
+	default:
+		log.Printf("server: config: environment %q not available, using default %q\n", env, Local)
+		return Local
+	}
+}
+
 type Config struct {
-	Environment string
+	Environment Environment
 	Server      Server
 	Auth        Auth
 	DB          DB
-}
-
-type Auth struct {
-	JWT *JWT
-}
-
-type JWT struct {
-	Algorithm string
-	Key       string
 }
 
 type Server struct {
@@ -44,6 +52,15 @@ type ServerHealth struct {
 	Interval int
 	Delay    int
 	Retries  int
+}
+
+type Auth struct {
+	JWT *JWT
+}
+
+type JWT struct {
+	Algorithm string
+	Key       string
 }
 
 type DB struct {
@@ -115,7 +132,7 @@ func NewConfig(args []string) (*Config, error) {
 	}
 
 	return &Config{
-		Environment: env,
+		Environment: NewEnvironment(env),
 		Server: Server{
 			Host: serverHost,
 			Port: serverPort,
