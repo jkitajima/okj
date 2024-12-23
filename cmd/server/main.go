@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -19,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -72,13 +74,26 @@ func exec(
 		return err
 	}
 
+	// Set up Instrumentation
+	otelShutdown, err := setupOTelSDK(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = errors.Join(err, otelShutdown(ctx))
+	}()
+
+	// Add HTTP instrumentation for the whole server
+	otelhandler := otelhttp.NewHandler(composer.Mux, "/")
+
 	// Server config
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Server.Host, cfg.Server.Port),
+		BaseContext:  func(net.Listener) context.Context { return ctx },
 		WriteTimeout: time.Second * time.Duration(cfg.Server.Timeout.Write),
 		ReadTimeout:  time.Second * time.Duration(cfg.Server.Timeout.Read),
 		IdleTimeout:  time.Second * time.Duration(cfg.Server.Timeout.Idle),
-		Handler:      composer,
+		Handler:      otelhandler,
 	}
 
 	// Graceful shutdown

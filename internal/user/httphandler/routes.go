@@ -1,6 +1,9 @@
 package httphandler
 
 import (
+	"net/http"
+
+	"okj/pkg/otel"
 	"okj/pkg/responder"
 
 	"github.com/go-chi/chi/v5"
@@ -13,13 +16,13 @@ func (s *UserServer) addRoutes() {
 		r.Use(jwtauth.Verifier(s.auth))
 		r.Use(responder.RespondAuth(s.auth))
 
-		r.Post("/", s.handleUserCreate())
-		r.Patch("/{userID}", s.handleUserUpdateByID())
-		r.Delete("/{userID}", s.handleUserSoftDeleteByID())
+		otel.Route(r, http.MethodPost, "/", s.handleUserCreate())
+		otel.Route(r, http.MethodPatch, "/{userID}", s.handleUserUpdateByID())
+		otel.Route(r, http.MethodDelete, "/{userID}", s.handleUserSoftDeleteByID())
 	})
 
 	// Public routes
 	s.mux.Group(func(r chi.Router) {
-		r.Get("/{userID}", s.handleUserFindByID())
+		otel.Route(r, http.MethodGet, "/{userID}", s.handleUserFindByID())
 	})
 }
