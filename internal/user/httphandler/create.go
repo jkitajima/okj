@@ -7,6 +7,7 @@ import (
 	"okj/internal/user"
 	"okj/pkg/responder"
 
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 )
 
@@ -14,7 +15,6 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 	type request struct {
 		FirstName string `json:"first_name" validate:"required"`
 		LastName  string `json:"last_name"`
-		Role      string `json:"role" validate:"omitempty,oneof=default admin"`
 	}
 
 	type response struct {
@@ -36,10 +36,6 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 			Name:       "last_name",
 			Validation: "Field value cannot be an empty string.",
 		},
-		"Role": {
-			Name:       "role",
-			Validation: "Field value must be either 'default' or 'admin'.",
-		},
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,15 +50,35 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 			return
 		}
 
+		_, claims, err := jwtauth.FromContext(r.Context())
+		if err != nil {
+			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Bearer token is malformatted.")
+			return
+		}
+
+		uuid, err := uuid.Parse(claims["sub"].(string))
+		if err != nil {
+			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Invalid UUID.")
+			return
+		}
+
 		createResponse, err := s.service.Create(r.Context(), user.CreateRequest{
 			User: &user.User{
+				ID:        uuid,
 				FirstName: req.FirstName,
 				LastName:  &req.LastName,
-				Role:      user.Role(req.Role),
+				Role:      user.Default,
 			},
 		})
 		if err != nil {
-			responder.RespondInternalError(w, r)
+			switch err {
+			case user.ErrUserAlreadyExists:
+				responder.RespondMetaMessage(w, r, http.StatusBadRequest, "There is already an user registered for this token subject.")
+			case user.ErrInternal:
+				fallthrough
+			default:
+				responder.RespondInternalError(w, r)
+			}
 			return
 		}
 

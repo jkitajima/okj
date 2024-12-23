@@ -2,10 +2,10 @@ package gorm
 
 import (
 	"context"
-	"fmt"
 
 	"okj/internal/user"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -28,8 +28,13 @@ func (db *DB) Insert(ctx context.Context, u *user.User) error {
 
 	result := db.Create(model)
 	if result.Error != nil {
-		fmt.Println(result.Error)
-		return user.ErrInternal
+		err := result.Error.(*pgconn.PgError)
+		switch err.Code {
+		case "23505":
+			return user.ErrUserAlreadyExists
+		default:
+			return user.ErrInternal
+		}
 	}
 
 	u.ID = model.ID
