@@ -22,7 +22,6 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 func main() {
@@ -117,11 +116,7 @@ func initDB(config *DB) (*gorm.DB, error) {
 		config.Port,
 		config.SSL,
 	)
-	db, err := gorm.Open(postgres.Open(config.DSN), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix: "resource.",
-		},
-	})
+	db, err := gorm.Open(postgres.Open(config.DSN), &gorm.Config{})
 	if err != nil {
 		return &gorm.DB{}, err
 	}
