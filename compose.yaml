@@ -1,0 +1,32 @@
+name: okj
+
+services:
+  db:
+    container_name: okj_db
+    image: postgres:17.2-alpine3.21
+    expose:
+      - 5432
+    ports:
+      - 127.0.0.1:5432:5432
+    environment:
+      POSTGRES_PASSWORD: passwd
+      POSTGRES_USER: postgres
+    restart: always
+    shm_size: 128mb
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+    networks:
+      - okj
+    volumes:
+      - okj_db:/var/lib/postgresql/data
+
+networks:
+  okj:
+    name: okj
+
+volumes:
+  okj_db:
+    name: okj_db
