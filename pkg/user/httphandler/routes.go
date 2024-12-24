@@ -3,8 +3,8 @@ package httphandler
 import (
 	"net/http"
 
-	"okj/pkg/otel"
-	"okj/pkg/responder"
+	"okj/lib/otel"
+	"okj/lib/responder"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"

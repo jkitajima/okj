@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"okj/internal/user"
+	"okj/pkg/user"
 
 	"github.com/google/uuid"
 )

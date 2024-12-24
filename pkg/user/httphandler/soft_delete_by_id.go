@@ -3,8 +3,8 @@ package httphandler
 import (
 	"net/http"
 
-	"okj/internal/user"
-	"okj/pkg/responder"
+	"okj/lib/responder"
+	"okj/pkg/user"
 
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"

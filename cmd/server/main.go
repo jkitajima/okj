@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	UserServer "okj/internal/user/httphandler"
-	repo "okj/internal/user/repo/gorm"
-	serverComposer "okj/pkg/composer"
+	serverComposer "okj/lib/composer"
+	UserServer "okj/pkg/user/httphandler"
+	repo "okj/pkg/user/repo/gorm"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"

@@ -3,7 +3,7 @@ package gorm
 import (
 	"log/slog"
 
-	"okj/internal/user"
+	"okj/pkg/user"
 
 	"gorm.io/gorm"
 )

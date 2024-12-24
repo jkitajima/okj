@@ -3,7 +3,7 @@ package gorm
 import (
 	"time"
 
-	"okj/internal/user"
+	"okj/pkg/user"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

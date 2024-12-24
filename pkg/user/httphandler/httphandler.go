@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"okj/internal/user"
-	repo "okj/internal/user/repo/gorm"
-	"okj/pkg/composer"
+	"okj/lib/composer"
+	"okj/pkg/user"
+	repo "okj/pkg/user/repo/gorm"
 
 	"github.com/go-playground/validator/v10"
 

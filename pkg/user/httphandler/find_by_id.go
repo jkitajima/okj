@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"okj/internal/user"
-	"okj/pkg/responder"
+	"okj/lib/responder"
+	"okj/pkg/user"
 
 	"github.com/google/uuid"
 )

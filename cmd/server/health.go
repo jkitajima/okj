@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"okj/pkg/composer"
+	"okj/lib/composer"
 
 	"github.com/alexliesenfeld/health"
 	healthPsql "github.com/hellofresh/health-go/v5/checks/postgres"

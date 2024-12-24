@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"okj/internal/user"
+	"okj/pkg/user"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
