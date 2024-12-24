@@ -1,0 +1,100 @@
+name: okj
+
+services:
+  db:
+    container_name: okj_db
+    image: postgres:17.2-alpine3.21
+    expose:
+      - 5432
+    ports:
+      - 127.0.0.1:5432:5432
+    environment:
+      POSTGRES_PASSWORD: passwd
+      POSTGRES_USER: postgres
+    restart: always
+    shm_size: 128mb
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+    networks:
+      - okj
+    volumes:
+      - okj_db:/var/lib/postgresql/data
+
+  otelcol:
+    container_name: okj_otelcol
+    image: otel/opentelemetry-collector-contrib:0.116.1
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
+    networks:
+      - okj
+    volumes:
+      - ../../configs/otel/collector.yaml:/etc/otelcol-contrib/config.yaml
+
+  opensearch_dataprepper:
+    container_name: okj_dataprepper
+    image: opensearchproject/data-prepper:2.10.2
+    ports:
+      - 2021:2021
+      - 21891:21891
+      - 21892:21892
+      - 4900:4900
+    volumes:
+      - ../../configs/opensearch/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml
+      - ../../configs/opensearch/data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml
+    networks:
+      - okj
+    depends_on:
+      - opensearch
+
+  opensearch:
+    container_name: okj_opensearch
+    image: docker.io/opensearchproject/opensearch:2.18.0
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=Developer@123"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    networks:
+      - okj
+
+  dashboards:
+    container_name: okj_dashboards
+    image: docker.io/opensearchproject/opensearch-dashboards:2.18.0
+    expose:
+      - 5601
+    ports:
+      - 5601:5601
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+    depends_on:
+      - opensearch
+    networks:
+      - okj
+
+networks:
+  okj:
+    name: okj
+
+volumes:
+  okj_db:
+    name: okj_db
