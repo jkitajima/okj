@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/log/global"
@@ -91,7 +91,7 @@ func NewPropagator() propagation.TextMapPropagator {
 }
 
 func NewLogger(ctx context.Context, res *resource.Resource) (*log.LoggerProvider, error) {
-	exporter, err := otlploggrpc.New(ctx, otlploggrpc.WithInsecure())
+	exporter, err := otlploghttp.New(ctx, otlploghttp.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
