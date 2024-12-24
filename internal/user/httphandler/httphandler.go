@@ -1,6 +1,7 @@
 package httphandler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"okj/internal/user"
@@ -22,6 +23,7 @@ type UserServer struct {
 	auth           *jwtauth.JWTAuth
 	db             user.Repoer
 	inputValidator *validator.Validate
+	logger         *slog.Logger
 }
 
 func (s *UserServer) Prefix() string {
@@ -36,14 +38,15 @@ func (s *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-func NewServer(auth *jwtauth.JWTAuth, db *gorm.DB, validtr *validator.Validate) composer.Server {
+func NewServer(auth *jwtauth.JWTAuth, db *gorm.DB, validtr *validator.Validate, logger *slog.Logger) composer.Server {
 	s := &UserServer{
 		entity:         "users",
 		prefix:         "/users",
 		mux:            chi.NewRouter(),
 		auth:           auth,
-		db:             repo.NewRepo(db),
+		db:             repo.NewRepo(db, logger),
 		inputValidator: validtr,
+		logger:         logger,
 	}
 
 	s.service = &user.Service{Repo: s.db}

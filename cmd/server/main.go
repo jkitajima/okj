@@ -20,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"gorm.io/driver/postgres"
@@ -57,6 +58,7 @@ func exec(
 	}
 
 	inputValidator := validator.New(validator.WithRequiredStructEnabled())
+	logger := otelslog.NewLogger("okj")
 
 	// Mounting routers
 	composer := serverComposer.NewComposer(
@@ -69,7 +71,7 @@ func exec(
 		middleware.RedirectSlashes,
 	)
 	healthCheck := SetupHealthCheck(cfg)
-	userServer := UserServer.NewServer(jwtAuth, db, inputValidator)
+	userServer := UserServer.NewServer(jwtAuth, db, inputValidator, logger)
 	if err := composer.Compose(healthCheck, userServer); err != nil {
 		return err
 	}

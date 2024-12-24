@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 
 	"okj/internal/user"
 
@@ -28,6 +29,7 @@ func (db *DB) Insert(ctx context.Context, u *user.User) error {
 
 	result := db.Create(model)
 	if result.Error != nil {
+		db.logger.ErrorContext(ctx, fmt.Errorf("user: repo: gorm: %w", result.Error).Error())
 		err := result.Error.(*pgconn.PgError)
 		switch err.Code {
 		case "23505":
