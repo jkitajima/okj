@@ -66,8 +66,8 @@ type Repoer interface {
 }
 
 var (
-	ErrInternal          = errors.New("user: the user service encountered an unexpected condition that prevented it from fulfilling the request")
-	ErrNotFoundByID      = errors.New("user: could not find any user with provided ID")
-	ErrInvalidRole       = errors.New("user: role is not valid")
-	ErrUserAlreadyExists = errors.New("user: an user already exists with the provided ID")
+	ErrInternal          = errors.New("the user service encountered an unexpected condition that prevented it from fulfilling the request")
+	ErrNotFoundByID      = errors.New("could not find any user with provided ID")
+	ErrInvalidRole       = errors.New("role is not valid")
+	ErrUserAlreadyExists = errors.New("an user already exists with the provided ID")
 )

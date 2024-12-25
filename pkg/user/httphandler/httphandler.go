@@ -53,3 +53,5 @@ func NewServer(auth *jwtauth.JWTAuth, db *gorm.DB, validtr *validator.Validate, 
 	s.addRoutes()
 	return s
 }
+
+const Path = "okj/pkg/user/httphandler"

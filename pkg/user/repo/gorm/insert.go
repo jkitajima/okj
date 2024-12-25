@@ -2,8 +2,8 @@ package gorm
 
 import (
 	"context"
-	"fmt"
 
+	"okj/lib/otel"
 	"okj/pkg/user"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -29,7 +29,7 @@ func (db *DB) Insert(ctx context.Context, u *user.User) error {
 
 	result := db.Create(model)
 	if result.Error != nil {
-		db.logger.ErrorContext(ctx, fmt.Errorf("user: repo: gorm: %w", result.Error).Error())
+		db.logger.WarnContext(ctx, otel.FormatLog(Path, "insert.go [Insert]: failed to create user", result.Error))
 		err := result.Error.(*pgconn.PgError)
 		switch err.Code {
 		case "23505":

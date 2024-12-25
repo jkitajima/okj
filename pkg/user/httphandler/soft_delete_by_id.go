@@ -3,6 +3,7 @@ package httphandler
 import (
 	"net/http"
 
+	"okj/lib/otel"
 	"okj/lib/responder"
 	"okj/pkg/user"
 
@@ -51,6 +52,7 @@ func (s *UserServer) handleUserSoftDeleteByID() http.HandlerFunc {
 		}
 
 		if err := responder.Respond(w, r, http.StatusNoContent, nil); err != nil {
+			s.logger.WarnContext(r.Context(), otel.FormatLog(Path, "soft_delete_by_id.go [handleUserSoftDeleteByID]: failed to encode response", err))
 			responder.RespondInternalError(w, r)
 			return
 		}

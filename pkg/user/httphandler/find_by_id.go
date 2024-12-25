@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"okj/lib/otel"
 	"okj/lib/responder"
 	"okj/pkg/user"
 
@@ -51,6 +52,7 @@ func (s *UserServer) handleUserFindByID() http.HandlerFunc {
 		}
 
 		if err := responder.Respond(w, r, http.StatusOK, &responder.DataField{Data: resp}); err != nil {
+			s.logger.WarnContext(r.Context(), otel.FormatLog(Path, "find_by_id.go [handleUserFindByID]: failed to encode response", err))
 			responder.RespondInternalError(w, r)
 			return
 		}

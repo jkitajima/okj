@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"okj/lib/otel"
 	"okj/pkg/user"
 
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ func (db *DB) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 		case gorm.ErrRecordNotFound:
 			return nil, user.ErrNotFoundByID
 		default:
+			db.logger.WarnContext(ctx, otel.FormatLog(Path, "find_by_id.go [FindByID]: failed to query for user", result.Error))
 			return nil, user.ErrInternal
 		}
 	}

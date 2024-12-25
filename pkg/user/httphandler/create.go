@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"okj/lib/otel"
 	"okj/lib/responder"
 	"okj/pkg/user"
 
@@ -93,6 +94,7 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 		}
 
 		if err := responder.Respond(w, r, http.StatusCreated, &responder.DataField{Data: resp}); err != nil {
+			s.logger.WarnContext(r.Context(), otel.FormatLog(Path, "create.go [handleUserCreate]: failed to encode response", err))
 			responder.RespondInternalError(w, r)
 			return
 		}

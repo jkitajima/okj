@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"okj/lib/otel"
 	"okj/lib/responder"
 	"okj/pkg/user"
 
@@ -86,6 +87,7 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 		}
 
 		if err := responder.Respond(w, r, http.StatusOK, &responder.DataField{Data: resp}); err != nil {
+			s.logger.WarnContext(r.Context(), otel.FormatLog(Path, "update_by_id.go [handleUserUpdateByID]: failed to encode response", err))
 			responder.RespondInternalError(w, r)
 			return
 		}

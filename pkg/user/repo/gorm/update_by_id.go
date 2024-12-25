@@ -2,8 +2,8 @@ package gorm
 
 import (
 	"context"
-	"fmt"
 
+	"okj/lib/otel"
 	"okj/pkg/user"
 
 	"github.com/google/uuid"
@@ -18,7 +18,7 @@ func (db *DB) UpdateByID(ctx context.Context, id uuid.UUID, u *user.User) error 
 		Role:      u.Role,
 	})
 	if result.Error != nil {
-		fmt.Println(result.Error)
+		db.logger.WarnContext(ctx, otel.FormatLog(Path, "update_by_id.go [UpdateByID]: failed to update user", result.Error))
 		return user.ErrInternal
 	}
 

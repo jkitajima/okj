@@ -8,6 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const Path = "okj/pkg/user/repo/gorm"
+
 type DB struct {
 	*gorm.DB
 	logger *slog.Logger
