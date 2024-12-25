@@ -39,12 +39,12 @@ func exec(
 	ctx context.Context,
 	args []string,
 	_ io.Reader,
-	_ io.Writer,
+	stdout io.Writer,
 	_ io.Writer,
 	_ func(string) string,
 	_ func() (string, error),
 ) error {
-	cfg, err := NewConfig(args)
+	cfg, err := NewConfig(stdout, args)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func exec(
 		middleware.CleanPath,
 		middleware.RedirectSlashes,
 	)
-	healthCheck := SetupHealthCheck(cfg)
+	healthCheck := SetupHealthCheck(cfg, logger)
 	userServer := UserServer.NewServer(jwtAuth, db, inputValidator, logger)
 	if err := composer.Compose(healthCheck, userServer); err != nil {
 		return err
@@ -157,3 +157,5 @@ func initDB(config *DB) (*gorm.DB, error) {
 
 	return db, nil
 }
+
+const Path = "okj/cmd/server"

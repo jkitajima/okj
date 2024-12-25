@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"okj/lib/composer"
+	"okj/lib/otel"
 
 	"github.com/alexliesenfeld/health"
 	healthPsql "github.com/hellofresh/health-go/v5/checks/postgres"
@@ -31,7 +33,7 @@ func (s *HealthServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-func SetupHealthCheck(cfg *Config) composer.Server {
+func SetupHealthCheck(cfg *Config, logger *slog.Logger) composer.Server {
 	s := &HealthServer{
 		prefix: "/healthz",
 		mux:    chi.NewRouter(),
@@ -51,7 +53,22 @@ func SetupHealthCheck(cfg *Config) composer.Server {
 				MaxContiguousFails: uint(cfg.Server.Health.Retries),
 			}),
 		health.WithStatusListener(func(ctx context.Context, state health.CheckerState) {
-			log.Printf("health status changed to %q", state.Status)
+			status := otel.FormatLog(Path, fmt.Sprintf("health.go [SetupHealthCheck]: health status changed to %q", state.Status), nil)
+			switch state.Status {
+			case health.StatusUp:
+				logger.Info(status)
+			case health.StatusDown:
+				failed := make([]string, 0)
+				for check, checkState := range state.CheckState {
+					if checkState.Status == health.StatusDown {
+						failed = append(failed, check)
+					}
+				}
+				status = fmt.Sprintf("%s (failed checks: %v)", status, failed)
+				logger.Error(status)
+			case health.StatusUnknown:
+				logger.Warn(status)
+			}
 		}),
 	)
 	s.mux.Get("/readiness", health.NewHandler(checker))

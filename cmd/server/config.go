@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"io"
 
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
@@ -20,7 +20,6 @@ func NewEnvironment(env string) Environment {
 	case "local":
 		return Local
 	default:
-		log.Printf("server: config: environment %q not available, using default %q\n", env, Local)
 		return Local
 	}
 }
@@ -73,7 +72,7 @@ type DB struct {
 	DSN      string
 }
 
-func NewConfig(args []string) (*Config, error) {
+func NewConfig(stdout io.Writer, args []string) (*Config, error) {
 	fs := ff.NewFlagSet("okj")
 	var (
 		config                string
@@ -126,8 +125,8 @@ func NewConfig(args []string) (*Config, error) {
 		ff.WithConfigFileFlag("config"),
 		ff.WithConfigIgnoreUndefinedFlags(),
 	); err != nil {
-		fmt.Printf("%s\n", ffhelp.Flags(fs))
-		fmt.Printf("ERROR\n%v\n", err)
+		fmt.Fprintf(stdout, "%s\n", ffhelp.Flags(fs))
+		fmt.Fprintf(stdout, "ERROR\n%v\n", err)
 		return &Config{}, err
 	}
 
