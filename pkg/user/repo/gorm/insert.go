@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 
 	"okj/lib/otel"
 	"okj/pkg/user"
@@ -38,6 +39,7 @@ func (db *DB) Insert(ctx context.Context, u *user.User) error {
 			return user.ErrInternal
 		}
 	}
+	db.logger.InfoContext(ctx, otel.FormatLog(Path, fmt.Sprintf("insert.go [Insert]: created a new user with id %q", model.ID.String()), nil))
 
 	u.ID = model.ID
 	u.Role = model.Role

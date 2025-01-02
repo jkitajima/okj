@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
@@ -29,20 +30,29 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := s.tracer.Start(r.Context(), "user_update_by_id")
+		defer span.End()
+
 		req, err := responder.Decode[request](r)
 		if err != nil {
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
 			responder.RespondInternalError(w, r)
 			return
 		}
 
-		_, claims, err := jwtauth.FromContext(r.Context())
+		_, claims, err := jwtauth.FromContext(ctx)
 		if err != nil {
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Bearer token is malformatted.")
 			return
 		}
 
 		sub, err := uuid.Parse(claims["sub"].(string))
 		if err != nil {
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Invalid UUID.")
 			return
 		}
@@ -50,16 +60,20 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 		id := r.PathValue("userID")
 		uuid, err := uuid.Parse(id)
 		if err != nil {
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "User ID must be a valid UUID.")
 			return
 		}
 
 		if sub != uuid {
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusForbidden, "You are not allowed to update other user's information.")
 			return
 		}
 
-		updateResponse, err := s.service.UpdateByID(r.Context(), user.UpdateByIDRequest{
+		updateResponse, err := s.service.UpdateByID(ctx, user.UpdateByIDRequest{
 			ID: uuid,
 			User: &user.User{
 				FirstName: req.FirstName,
@@ -67,6 +81,8 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 			},
 		})
 		if err != nil {
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
 			switch err {
 			case user.ErrNotFoundByID:
 				responder.RespondMetaMessage(w, r, http.StatusNotFound, "Could not find any user with provided ID.")
@@ -87,7 +103,9 @@ func (s *UserServer) handleUserUpdateByID() http.HandlerFunc {
 		}
 
 		if err := responder.Respond(w, r, http.StatusOK, &responder.DataField{Data: resp}); err != nil {
-			s.logger.WarnContext(r.Context(), otel.FormatLog(Path, "update_by_id.go [handleUserUpdateByID]: failed to encode response", err))
+			span.SetStatus(codes.Error, "user_update_by_id failed")
+			span.RecordError(err)
+			s.logger.ErrorContext(ctx, otel.FormatLog(Path, "update_by_id.go [handleUserUpdateByID]: failed to encode response", err))
 			responder.RespondInternalError(w, r)
 			return
 		}

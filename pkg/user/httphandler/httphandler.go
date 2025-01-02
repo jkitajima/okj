@@ -9,6 +9,7 @@ import (
 	repo "okj/pkg/user/repo/gorm"
 
 	"github.com/go-playground/validator/v10"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
@@ -24,6 +25,7 @@ type UserServer struct {
 	db             user.Repoer
 	inputValidator *validator.Validate
 	logger         *slog.Logger
+	tracer         trace.Tracer
 }
 
 func (s *UserServer) Prefix() string {
@@ -38,7 +40,7 @@ func (s *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-func NewServer(auth *jwtauth.JWTAuth, db *gorm.DB, validtr *validator.Validate, logger *slog.Logger) composer.Server {
+func NewServer(auth *jwtauth.JWTAuth, db *gorm.DB, validtr *validator.Validate, logger *slog.Logger, tracer trace.Tracer) composer.Server {
 	s := &UserServer{
 		entity:         "users",
 		prefix:         "/users",
@@ -47,6 +49,7 @@ func NewServer(auth *jwtauth.JWTAuth, db *gorm.DB, validtr *validator.Validate, 
 		db:             repo.NewRepo(db, logger),
 		inputValidator: validtr,
 		logger:         logger,
+		tracer:         tracer,
 	}
 
 	s.service = &user.Service{Repo: s.db}

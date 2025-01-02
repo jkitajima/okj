@@ -14,6 +14,10 @@ exporters:
     endpoint: http://loki:3100/otlp
     tls:
       insecure: true
+  otlp/traces:
+      endpoint: jaeger:16685
+      tls:
+        insecure: true
   debug:
 
 extensions:
@@ -27,7 +31,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [debug, otlp/traces]
     metrics:
       receivers: [otlp]
       processors: [batch]

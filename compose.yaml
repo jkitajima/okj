@@ -38,7 +38,17 @@ services:
     networks:
       - okj
     volumes:
-      - ../../configs/otel/collector.yaml:/etc/otelcol-contrib/config.yaml
+      - ./configs/otel/collector.yaml:/etc/otelcol-contrib/config.yaml
+
+  jaeger:
+    container_name: okj_jaeger
+    image: jaegertracing/all-in-one:1.64.0
+    ports:
+      - 6831:6831
+      - 16685:16685
+      - 16686:16686
+    networks:
+      - okj
 
   loki:
     container_name: okj_grafana_loki
@@ -71,6 +81,11 @@ services:
           isDefault: true
           version: 1
           editable: false
+        - name: Jaeger
+          type: jaeger
+          access: browser
+          url: http://jaeger:16686
+          editable: true
         EOF
         /run.sh
     container_name: okj_grafana

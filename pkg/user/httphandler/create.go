@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func (s *UserServer) handleUserCreate() http.HandlerFunc {
@@ -40,30 +41,41 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := s.tracer.Start(r.Context(), "user_create")
+		defer span.End()
+
 		req, err := responder.Decode[request](r)
 		if err != nil {
+			span.SetStatus(codes.Error, "user_create failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Request body is invalid.")
 			return
 		}
 
 		if errors := responder.ValidateInput(s.inputValidator, req, contract); len(errors) > 0 {
+			span.SetStatus(codes.Error, "user_create failed")
+			span.RecordError(err)
 			responder.RespondClientErrors(w, r, errors...)
 			return
 		}
 
-		_, claims, err := jwtauth.FromContext(r.Context())
+		_, claims, err := jwtauth.FromContext(ctx)
 		if err != nil {
+			span.SetStatus(codes.Error, "user_create failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Bearer token is malformatted.")
 			return
 		}
 
 		uuid, err := uuid.Parse(claims["sub"].(string))
 		if err != nil {
+			span.SetStatus(codes.Error, "user_create failed")
+			span.RecordError(err)
 			responder.RespondMetaMessage(w, r, http.StatusBadRequest, "Invalid UUID.")
 			return
 		}
 
-		createResponse, err := s.service.Create(r.Context(), user.CreateRequest{
+		createResponse, err := s.service.Create(ctx, user.CreateRequest{
 			User: &user.User{
 				ID:        uuid,
 				FirstName: req.FirstName,
@@ -72,6 +84,8 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 			},
 		})
 		if err != nil {
+			span.SetStatus(codes.Error, "user_create failed")
+			span.RecordError(err)
 			switch err {
 			case user.ErrUserAlreadyExists:
 				responder.RespondMetaMessage(w, r, http.StatusBadRequest, "There is already an user registered for this token subject.")
@@ -94,7 +108,9 @@ func (s *UserServer) handleUserCreate() http.HandlerFunc {
 		}
 
 		if err := responder.Respond(w, r, http.StatusCreated, &responder.DataField{Data: resp}); err != nil {
-			s.logger.WarnContext(r.Context(), otel.FormatLog(Path, "create.go [handleUserCreate]: failed to encode response", err))
+			span.SetStatus(codes.Error, "user_create failed")
+			span.RecordError(err)
+			s.logger.ErrorContext(ctx, otel.FormatLog(Path, "create.go [handleUserCreate]: failed to encode response", err))
 			responder.RespondInternalError(w, r)
 			return
 		}

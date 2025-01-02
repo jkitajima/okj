@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 
 	"okj/lib/otel"
 	"okj/pkg/user"
@@ -21,6 +22,7 @@ func (db *DB) UpdateByID(ctx context.Context, id uuid.UUID, u *user.User) error 
 		db.logger.WarnContext(ctx, otel.FormatLog(Path, "update_by_id.go [UpdateByID]: failed to update user", result.Error))
 		return user.ErrInternal
 	}
+	db.logger.InfoContext(ctx, otel.FormatLog(Path, fmt.Sprintf("update_by_id.go [UpdateByID]: updated user with id %q", model.ID.String()), nil))
 
 	u.ID = model.ID
 	u.FirstName = model.FirstName
